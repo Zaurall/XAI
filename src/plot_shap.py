@@ -33,13 +33,16 @@ class ShapPlotter:
         sorted_features = [feature_names[i] for i in sorted_indices]
         sorted_shap_values = shap_values[:, sorted_indices]
 
-        top_features = sorted_features[:number_features]
-        top_shap_values = sorted_shap_values[:, :number_features]
-
-        if sorted_shap_values.shape[1] > number_features:
-            other_shap_values = np.sum(sorted_shap_values[:, number_features:], axis=1)
-            top_features.append(f"Other {len(feature_names) - number_features} Features (Sum)")
-            top_shap_values = np.column_stack((top_shap_values, other_shap_values))
+        if len(feature_names) == number_features + 1:
+            top_features = sorted_features
+            top_shap_values = sorted_shap_values
+        else:
+            top_features = sorted_features[:number_features]
+            top_shap_values = sorted_shap_values[:, :number_features]
+            if sorted_shap_values.shape[1] > number_features:
+                other_shap_values = np.sum(sorted_shap_values[:, number_features:], axis=1)
+                top_features.append(f"Other {len(feature_names) - number_features} Features (Sum)")
+                top_shap_values = np.column_stack((top_shap_values, other_shap_values))
 
         plt.figure(figsize=figsize)
 
@@ -97,15 +100,19 @@ class ShapPlotter:
             sorted_features = [feature_names[i] for i in sorted_indices]
             sorted_shap_values = shap_values[sorted_indices]
 
-            if number_features is not None and number_features < len(sorted_features):
-                top_features = sorted_features[:number_features]
-                top_shap_values = sorted_shap_values[:number_features]
-                other_shap_value = np.sum(sorted_shap_values[number_features:])
-                top_features.append(f"Other {len(feature_names) - number_features} Features (Sum)")
-                top_shap_values = np.append(top_shap_values, other_shap_value)
-            else:
+            if len(feature_names) == number_features + 1:
                 top_features = sorted_features
                 top_shap_values = sorted_shap_values
+            else:
+                if number_features is not None and number_features < len(sorted_features):
+                    top_features = sorted_features[:number_features]
+                    top_shap_values = sorted_shap_values[:number_features]
+                    other_shap_value = np.sum(sorted_shap_values[number_features:])
+                    top_features.append(f"Other {len(feature_names) - number_features} Features (Sum)")
+                    top_shap_values = np.append(top_shap_values, other_shap_value)
+                else:
+                    top_features = sorted_features
+                    top_shap_values = sorted_shap_values
 
             plt.figure(figsize=figsize)
             colors = [self.shap_red if val > 0 else self.shap_blue for val in top_shap_values]
@@ -133,15 +140,19 @@ class ShapPlotter:
             sorted_features = [feature_names[i] for i in sorted_indices]
             sorted_shap_values = shap_values[sorted_indices]
 
-            if number_features is not None and number_features < len(sorted_features):
-                top_features = sorted_features[:number_features]
-                top_shap_values = sorted_shap_values[:number_features]
-                other_shap_value = np.sum(sorted_shap_values[number_features:])
-                top_features.append(f"Other {len(feature_names) - number_features} Features (Sum)")
-                top_shap_values = np.append(top_shap_values, other_shap_value)
-            else:
+            if len(feature_names) == number_features + 1:
                 top_features = sorted_features
                 top_shap_values = sorted_shap_values
+            else:
+                if number_features is not None and number_features < len(sorted_features):
+                    top_features = sorted_features[:number_features]
+                    top_shap_values = sorted_shap_values[:number_features]
+                    other_shap_value = np.sum(sorted_shap_values[number_features:])
+                    top_features.append(f"Other {len(feature_names) - number_features} Features (Sum)")
+                    top_shap_values = np.append(top_shap_values, other_shap_value)
+                else:
+                    top_features = sorted_features
+                    top_shap_values = sorted_shap_values
 
             plt.figure(figsize=figsize)
             bars = plt.barh(top_features, top_shap_values, color=self.shap_red)
@@ -182,12 +193,13 @@ class ShapPlotter:
         shap_values = shap_values[sort_idx]
         feature_names = feature_names[sort_idx]
 
-        if len(shap_values) > number_features:
-            top_shap = shap_values[:number_features]
-            top_features = feature_names[:number_features]
-            others_sum = np.sum(shap_values[number_features:])
-            shap_values = np.concatenate([top_shap, [others_sum]])
-            feature_names = np.concatenate([top_features, [f"Others {len(feature_names) - number_features} features"]])
+        if len(feature_names) != number_features + 1:
+            if len(shap_values) > number_features:
+                top_shap = shap_values[:number_features]
+                top_features = feature_names[:number_features]
+                others_sum = np.sum(shap_values[number_features:])
+                shap_values = np.concatenate([top_shap, [others_sum]])
+                feature_names = np.concatenate([top_features, [f"Others {len(feature_names) - number_features} features"]])
 
         cum_values = [expected_value]
         for val in shap_values:
