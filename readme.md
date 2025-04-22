@@ -59,7 +59,7 @@ Originally proposed by Lloyd Shapley in 1953, Shapley values were designed to fa
 The Shapley value for a feature *i* is calculated as:
 
 $$
-\phi_i = \sum_{S \subseteq N \setminus \{i\}} \frac{|S|! \, (|N| - |S| - 1)!}{|N|!} \left[ f(S \cup \{i\}) - f(S) \right]
+\phi_i = \sum_{S \subseteq N \setminus \{i\}} \frac{|S|! * (|N| - |S| - 1)!}{|N|!} \left[ f(S \cup \{i\}) - f(S) \right]
 $$
 
 Where:
@@ -75,9 +75,9 @@ SHAP leverages these values to provide explanations for individual predictions a
 - **Additivity:**  
   Model predictions can be decomposed as a sum of a baseline value and individual SHAP values:
 
-  $$
-  f(x) = \phi_0 + \sum_{i=1}^{n} \phi_i
-  $$
+$$
+f(x) = \phi_0 + \sum_{i=1}^{n} \phi_i
+$$
 
 - **Fairness:**  
   Features with similar contributions receive similar SHAP values.
@@ -101,9 +101,9 @@ Kernel SHAP approximates Shapley values via weighted linear regression on a subs
 - **Coalition Sampling:**  
   Instead of evaluating all \(2^M\) subsets, it samples a limited number (using a parameter like `max_samples`) with weights determined by the Shapley kernel:
   
-  $$
-  w(S) = \frac{M-1}{\binom{M}{|S|} \, |S| \, (M-|S|)}
-  $$
+$$
+w(S) = \frac{M-1}{\binom{M}{|S|} \, |S| \, (M-|S|)}
+$$
 
 - **Background Data Integration:**  
   It creates masked instances that blend the target observation with a set of background samples.
