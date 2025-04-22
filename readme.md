@@ -97,9 +97,9 @@ Kernel SHAP approximates Shapley values via weighted linear regression on a subs
 - **Coalition Sampling:**  
   Instead of evaluating all \(2^M\) subsets, it samples a limited number (using a parameter like `max_samples`) with weights determined by the Shapley kernel:
   
-  $$
-  w(S) = \frac{M-1}{\binom{M}{|S|} |S| (M-|S|)}
-  $$
+$$
+w(S) = \frac{M-1}{\binom{M}{|S|} |S| (M-|S|)}
+$$
 
   This prioritizes small (1-2 features) and large (M-1 to M-2 features) coalitions, which carry the highest information value.
 
