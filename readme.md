@@ -2,8 +2,6 @@
 
 *Authors: Amir Nigmatullin (am.nigmatullin@innopolis.university) and Nurislam Zinnatullin (n.zinnatullin@innopolis.university)*
 
-In today’s AI-driven world, building models that not only perform well but also provide transparent, understandable insights is critical—especially in sensitive domains such as hiring. This post explains how we combined the power of CatBoost with SHAP (Shapley Additive Explanations) to build an explainable recruitment system.
-
 ---
 
 ## Table of Contents
@@ -15,7 +13,7 @@ In today’s AI-driven world, building models that not only perform well but als
     - [SHAP in Machine Learning](#shap-in-machine-learning)
 4. [Efficient Approximation of Shapley Values](#efficient-approximation-of-shapley-values)
     - [Kernel SHAP (KernelExplainer)](#kernel-shap-kernelexplainer)
-    - [SamplingExplainer](#samplingexplainer)
+    - [Sampling-Based Approximation (SamplingExplainer)](#samplingexplainer)
     - [Tradeoffs and Practical Considerations](#tradeoffs-and-practical-considerations)
 5. [Our Recruitment Model: Case Study](#our-recruitment-model-case-study)
 6. [Key Insights and Recommendations](#key-insights-and-recommendations)
@@ -24,25 +22,23 @@ In today’s AI-driven world, building models that not only perform well but als
 
 ## 1. Introduction
 
-Explainable AI (XAI) is transforming how we build and trust machine learning models by shedding light on their decision-making processes. In hiring, where biases and opaque decisions can have serious legal and ethical implications, explainability is essential. Our goal is to develop a model aligned with HR experts’ decision-making while providing clear insights into its predictions using SHAP.
+Explainable Artificial Intelligence (XAI) has become a fundamental area of AI research, striving to improve the transparency and interpretability of machine learning models. Understanding how AI systems make decisions is crucial for fostering trust, ensuring accountability, and mitigating potential risks.
+
+In this post, we focus on the application of AI in hiring decisions, where biased models can pose significant legal, ethical challenges, and money loss in future. By leveraging the expertise of HR specialists, we can train a model that aligns with their decision-making processes. To enhance interpretability, we propose using SHAP (Shapley Additive Explanations) to estimate the factors influencing predictions. Specifically, we will explore the use of the CatBoost classifier to ensure accurate and explainable hiring decisions
 
 ---
 
 ## 2. CatBoost: Architecture and Advantages
 
-CatBoost, developed by Yandex, is a high-performance gradient boosting algorithm especially suited for handling categorical data. Its **ordered boosting** technique efficiently encodes categorical variables, which is critical in our recruitment dataset that includes features such as *Age, Gender, EducationLevel, ExperienceYears, InterviewScore, SkillScore, PersonalityScore,* and *RecruitmentStrategy*.
+CatBoost, a state-of-the-art algorithm developed by Yandex, is a powerful solution for efficient and accurate machine learning tasks, including classification and regression. With its innovative Ordered Boosting technique, CatBoost enhances predictive performance by leveraging decision trees effectively. In this article, we will explore the inner workings of the CatBoost algorithm.
 
 ![CatBoost schema](readme_images/catboost_schema.png)
+
+A major advantage of CatBoost is its efficient handling of categorical features. It utilizes a unique approach known as "ordered boosting," which enables the model to process categorical data directly. This method enhances training speed and boosts model accuracy by encoding categorical variables while maintaining their inherent order.
+
 ![CatBoost schema](readme_images/catboost_schema_1.png)
 
-### Key Features
-- **Efficient Handling of Categorical Data:**  
-  Ordered boosting enables direct processing of categorical features, enhancing both training speed and prediction accuracy.
-  
-- **Robust Model Performance:**  
-  CatBoost’s architecture supports both classification and regression tasks, making it a versatile tool in various applications.
-
-*Visual representations of the CatBoost architecture and decision-making process can further illustrate these points.*
+Our dataset was mainly contained of categorical or close to categorical features (Age, Gender, EducationLevel, ExperienceYears, InterviewScore, SkillScore, PersonalityScore, RecruitmentStrategy), therefore we decided to choose CatBoost as a recruitment system model.
 
 ---
 
@@ -73,7 +69,7 @@ Where:
 SHAP leverages these values to provide explanations for individual predictions as well as overall model behavior. Its key properties include:
 
 - **Additivity:**  
-  Model predictions can be decomposed as a sum of a baseline value and individual SHAP values:
+  Model predictions can be decomposed as a sum of a baseline value $\phi_0$ and individual SHAP values $\phi_i$:
 
 $$
 f(x) = \phi_0 + \sum_{i=1}^{n} \phi_i
@@ -101,31 +97,46 @@ Kernel SHAP approximates Shapley values via weighted linear regression on a subs
 - **Coalition Sampling:**  
   Instead of evaluating all \(2^M\) subsets, it samples a limited number (using a parameter like `max_samples`) with weights determined by the Shapley kernel:
   
-$$
-w(S) = \frac{M-1}{\binom{M}{|S|} |S| (M-|S|)}
-$$
+  $$
+  w(S) = \frac{M-1}{\binom{M}{|S|} |S| (M-|S|)}
+  $$
+
+  This prioritizes small (1-2 features) and large (M-1 to M-2 features) coalitions, which carry the highest information value.
 
 - **Background Data Integration:**  
-  It creates masked instances that blend the target observation with a set of background samples.
+  For each coalition, creates masked instances by blending the target observation's features with `background_data` (typically 10-100 samples). Predictions on these hybrid instances approximate $f(S \cup i)$ and $f(S)$.
   
 - **Regression:**  
-  Solves for SHAP values that best explain the difference in predictions.
+  Uses weighted linear regression to solve for Shapley values that best explain the prediction differences:
 
-*This reduces the complexity from \(O(2^M)\) to \(O(T \cdot M)\), where \(T\) is the number of samples.*
+$$
+\min_{\phi} \sum_{S} w(S) [f(S) - (\phi_0 + \sum_{i∈S}\phi_i)]²
+$$
 
-### SamplingExplainer
+*This reduces the complexity from $O(2^M)$ to $O(T \cdot M)$, where $T$ is the number of samples.*
 
-SamplingExplainer uses feature perturbation and averaging over background data to estimate feature contributions more quickly.
+### Sampling-Based Approximation (SamplingExplainer)
+
+SamplingExplainer uses *feature perturbation* and *averaging over background data* to estimate feature contributions more quickly.
 
 **Key Steps:**
 1. **Baseline Prediction:**  
    Compute average predictions using background data.
 2. **Perturbation Analysis:**  
-   Replace each feature value with the target instance’s value in background samples, and measure prediction changes.
-3. **Normalization:**  
-   Ensure that the sum of the contributions matches the difference between the instance’s prediction and the baseline.
+  For each feature in the target instance:
+    - Replace the feature's value in all background samples with the instance's value
+    - Compute prediction deltas in log-odds space
+    - Average deltas across background samples as the feature's contribution
+3. **Additivity Enforcement:**  
+   Rescales contributions to ensure:
 
-*Its complexity scales linearly with the number of features and background samples, making it suitable for high-dimensional data.*
+  $$
+  \sum\phi_i = f(x) - E[f]
+  $$
+
+  This preserves SHAP's local accuracy guarantee.
+
+Complexity scales as $O(B·M)$ where $B$ is background samples (typically 100-1000). For 100 features, this requires ~1e4 operations vs. 1e30 for exact computation.
 
 ### Tradeoffs and Practical Considerations
 
@@ -142,11 +153,23 @@ We applied our approach to build an autonomous hiring system using historical HR
 
 ### Model Performance Metrics
 
-- **Accuracy:** 95.67%
-- **ROC AUC Score:** 94.13%
-- **Classification Report:**
-  - **Class 0:** Precision 96%, Recall 98%, F1-score 97% (Support: 215)
-  - **Class 1:** Precision 94%, Recall 91%, F1-score 92% (Support: 85)
+```
+Accuracy:
+ 0.9566666666666667 
+
+ROC AUC Score:
+ 0.941313269493844 
+
+Classification Report:
+               precision    recall  f1-score   support
+
+           0       0.96      0.98      0.97       215
+           1       0.94      0.91      0.92        85
+
+    accuracy                           0.96       300
+   macro avg       0.95      0.94      0.95       300
+weighted avg       0.96      0.96      0.96       300
+```
 
 ### Feature Analysis
 
@@ -190,10 +213,15 @@ The waterfall plot for a specific candidate shows how each feature contributed t
 
 ### Build-in Feature importance by CatBoost
 
+Visual plots from both SHAP approaches and the built-in CatBoost feature importance revealed consistent insights, aligning well with our initial exploratory data analysis.
+
 ![CatBoost feature dependency](readme_images/catboost_features.png)
 
+### Why not use only CatBoost feature importance?
 
-Visual plots from both SHAP approaches and the built-in CatBoost feature importance revealed consistent insights, aligning well with our initial exploratory data analysis.
+It shows average magnitude of feature impact across the dataset
+
+SHAP values provide detailed feature contributions for each prediction, showing both magnitude and direction
 
 ---
 
