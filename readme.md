@@ -6,17 +6,17 @@
 
 ## Table of Contents
 
-1. [Introduction](#introduction)
-2. [CatBoost: Architecture and Advantages](#catboost-architecture-and-advantages)
-3. [Understanding SHAP and Shapley Values](#understanding-shap-and-shapley-values)
+1. [Introduction](#1-introduction)
+2. [CatBoost: Architecture and Advantages](#2-catboost-architecture-and-advantages)
+3. [Understanding SHAP and Shapley Values](#3-understanding-shap-and-shapley-values)
     - [Shapley Values from Game Theory](#shapley-values-from-game-theory)
     - [SHAP in Machine Learning](#shap-in-machine-learning)
-4. [Efficient Approximation of Shapley Values](#efficient-approximation-of-shapley-values)
+4. [Efficient Approximation of Shapley Values](#4-efficient-approximation-of-shapley-values)
     - [Kernel SHAP (KernelExplainer)](#kernel-shap-kernelexplainer)
-    - [Sampling-Based Approximation (SamplingExplainer)](#samplingexplainer)
+    - [Sampling-Based Approximation (SamplingExplainer)](#sampling-based-approximation-samplingexplainer)
     - [Tradeoffs and Practical Considerations](#tradeoffs-and-practical-considerations)
-5. [Our Recruitment Model: Case Study](#our-recruitment-model-case-study)
-6. [Key Insights and Recommendations](#key-insights-and-recommendations)
+5. [Our Recruitment Model: Case Study](#5-our-recruitment-model-case-study)
+6. [Key Insights and Recommendations](#6-key-insights-and-recommendations)
 
 ---
 
