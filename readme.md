@@ -146,7 +146,7 @@ SamplingExplainer uses *feature perturbation* and *averaging over background dat
 
   This preserves SHAP's local accuracy guarantee.
 
-Complexity scales as **_O(B·M·P)_** where **_B_** is background samples (typically 100-1000) and others you can see in kernel SHAP section. For 100 features, this requires ~1e4 operations vs. 1e30 for exact computation.
+Complexity scales as **_O(B·M·P)_** where **_B_** is background samples (typically 100-1000) and others you can see in kernel SHAP section.
 
 ### Tradeoffs and Practical Considerations
 
