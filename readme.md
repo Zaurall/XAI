@@ -30,7 +30,7 @@ In this post, we focus on the application of AI in hiring decisions, where biase
 
 ## 2. CatBoost: Architecture and Advantages
 
-CatBoost, a state-of-the-art algorithm developed by Yandex, is a powerful solution for efficient and accurate machine learning tasks, including classification and regression. With its innovative Ordered Boosting technique, CatBoost enhances predictive performance by leveraging decision trees effectively. In this article, we will explore the inner workings of the CatBoost algorithm.
+CatBoost, a state-of-the-art algorithm developed by Yandex, is a powerful solution for efficient and accurate machine learning tasks, including classification and regression. With its innovative Ordered Boosting technique, CatBoost enhances predictive performance by leveraging decision trees effectively.
 
 ![CatBoost schema](readme_images/catboost_schema.png)
 
@@ -75,13 +75,13 @@ $$
 f(x) = \phi_0 + \sum_{i=1}^{n} \phi_i
 $$
 
+  Suppose you trained a random forest, which means that the prediction is an average of many decision trees. The Additivity property guarantees that for a feature value, you can calculate the Shapley value for each tree individually, average them, and get the Shapley value for the feature value for the random forest.
+
 - **Fairness:**  
   Features with similar contributions receive similar SHAP values.
   
 - **Zero Importance:**  
   Features that do not affect the prediction have SHAP values close to zero.
-
-This interpretability allows us to see not just the magnitude, but also the direction of each feature’s influence on the model’s output.
 
 ---
 
