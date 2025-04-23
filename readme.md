@@ -113,7 +113,7 @@ $$
 \min_{\phi} \sum_{S} w(S) [f(S) - (\phi_0 + \sum_{i∈S}\phi_i)]²
 $$
 
-*This reduces the complexity from $O(2^M)$ to $O(T \cdot M)$, where $T$ is the number of samples.*
+This reduces the complexity from $O(2^M)$ to $O(T \cdot M)$, where $T$ is the number of samples.
 
 ### Sampling-Based Approximation (SamplingExplainer)
 
@@ -136,7 +136,7 @@ SamplingExplainer uses *feature perturbation* and *averaging over background dat
 
   This preserves SHAP's local accuracy guarantee.
 
-Complexity scales as $O(B·M)$ where $B$ is background samples (typically 100-1000). For 100 features, this requires ~1e4 operations vs. 1e30 for exact computation.
+Complexity scales as ${O(B·M)}$ where ${B}$ is background samples (typically 100-1000). For 100 features, this requires ~1e4 operations vs. 1e30 for exact computation.
 
 ### Tradeoffs and Practical Considerations
 
