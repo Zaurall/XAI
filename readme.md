@@ -4,9 +4,6 @@
 
 ---
 
-## [Dataset](https://www.kaggle.com/datasets/rabieelkharoua/predicting-hiring-decisions-in-recruitment-data)
-
-
 ## Table of Contents
 
 1. [Introduction](#1-introduction)
@@ -20,6 +17,8 @@
     - [Tradeoffs and Practical Considerations](#tradeoffs-and-practical-considerations)
 5. [Our Recruitment Model: Case Study](#5-our-recruitment-model-case-study)
 6. [Key Insights and Recommendations](#6-key-insights-and-recommendations)
+7. [Conclusion](#7-conclusion)
+8. [References](#8-references)
 
 ---
 
@@ -27,7 +26,7 @@
 
 Explainable Artificial Intelligence (XAI) has become a fundamental area of AI research, striving to improve the transparency and interpretability of machine learning models. Understanding how AI systems make decisions is crucial for fostering trust, ensuring accountability, and mitigating potential risks.
 
-In this post, we focus on the application of AI in hiring decisions, where biased models can pose significant legal, ethical challenges, and money loss in future. By leveraging the expertise of HR specialists, we can train a model that aligns with their decision-making processes. To enhance interpretability, we propose using SHAP (Shapley Additive Explanations) to estimate the factors influencing predictions. Specifically, we will explore the use of the CatBoost classifier to ensure accurate and explainable hiring decisions
+In this post, we focus on the application of AI in hiring decisions, where biased models can lead to significant legal and ethical challenges, as well as financial losses in the future. By leveraging the expertise of HR specialists, we can train a model that aligns with their decision-making processes. To enhance interpretability, we propose using SHAP (Shapley Additive Explanations) to estimate the factors influencing predictions. Specifically, we will explore the use of the CatBoost classifier to ensure accurate and explainable hiring decisions
 
 ---
 
@@ -41,7 +40,7 @@ A major advantage of CatBoost is its efficient handling of categorical features.
 
 ![CatBoost schema](readme_images/catboost_schema_1.png)
 
-Our dataset was mainly contained of categorical or close to categorical features (Age, Gender, EducationLevel, ExperienceYears, InterviewScore, SkillScore, PersonalityScore, RecruitmentStrategy), therefore we decided to choose CatBoost as a recruitment system model.
+Our dataset mainly consisted of categorical or near-categorical features (Age, Gender, EducationLevel, ExperienceYears, InterviewScore, SkillScore, PersonalityScore, RecruitmentStrategy), therefore we decided to choose CatBoost as a recruitment system model.
 
 ---
 
@@ -72,13 +71,14 @@ Where:
 SHAP leverages these values to provide explanations for individual predictions as well as overall model behavior. Its key properties include:
 
 - **Additivity:**  
-  Model predictions can be decomposed as a sum of a baseline value **_\phi_0_** and individual SHAP values **_\phi_i_**:
+  Model predictions can be decomposed as a sum of a baseline value **_ϕ 
+0_** and individual SHAP values **_ϕ i_**:
 
 $$
 f(x) = \phi_0 + \sum_{i=1}^{n} \phi_i
 $$
 
-  Suppose you trained a random forest, which means that the prediction is an average of many decision trees. The Additivity property guarantees that for a feature value, you can calculate the Shapley value for each tree individually, average them, and get the Shapley value for the feature value for the random forest.
+  For example, in ensemble models like random forests Additivity property guarantees that for a feature value, you can calculate the Shapley value for each tree individually, average them, and get the Shapley value for the feature value for the random forest.
 
 - **Fairness:**  
   Features with similar contributions receive similar SHAP values.
@@ -98,7 +98,7 @@ Kernel SHAP approximates Shapley values via weighted linear regression on a subs
 
 **How It Works:**
 - **Coalition Sampling:**  
-  Instead of evaluating all \(2^M\) subsets, it samples a limited number (using a parameter like `max_samples`) with weights determined by the Shapley kernel:
+  Instead of evaluating all \(2^M\) subsets (**_M_** is number of features), it samples a limited number (using a parameter like `max_samples`) with weights determined by the Shapley kernel:
   
 $$
 w(S) = \frac{M-1}{\binom{M}{|S|} |S| (M-|S|)}
@@ -116,7 +116,14 @@ $$
 \min_{\phi} \sum_{S} w(S) [f(S) - (\phi_0 + \sum_{i∈S}\phi_i)]²
 $$
 
-This reduces the complexity from **_O(2^M)_** to **_O(T * M)_**, where **_T_** is the number of samples.
+This reduces the complexity from **_O(2^M)_** to **_O(S · P + M^3)_**, where 
+- **_M_** is number of features
+- **_S_** is number of sampled coalitions in Kernel SHAP
+- **_B_** is number of background samples in SamplingExplainer
+- **_P_** is cost of a single model prediction (e.g., one forward pass)
+- **Model evaluations: _O(S⋅P)_** because we sample **_S_** coalitions and evaluate the model once per coalition
+- **Regression fit: _O((M+1)^3)_** to solve the weighted linear system for **_M_** feature weights plus the intercept.
+
 
 ### Sampling-Based Approximation (SamplingExplainer)
 
@@ -139,14 +146,14 @@ SamplingExplainer uses *feature perturbation* and *averaging over background dat
 
   This preserves SHAP's local accuracy guarantee.
 
-Complexity scales as **_O(B·M)_** where **_B_** is background samples (typically 100-1000). For 100 features, this requires ~1e4 operations vs. 1e30 for exact computation.
+Complexity scales as **_O(B·M·P)_** where **_B_** is background samples (typically 100-1000) and others you can see in kernel SHAP section. For 100 features, this requires ~1e4 operations vs. 1e30 for exact computation.
 
 ### Tradeoffs and Practical Considerations
 
 | **Method**           | **Strength**                         | **Limitation**                     |
 |----------------------|--------------------------------------|------------------------------------|
-| **KernelExplainer**  | Theoretically robust                 | Slower on high-dimensional data    |
-| **SamplingExplainer**| Faster and well-suited for classification | Assumes feature independence       |
+| **KernelExplainer**  | Theoretically robust, model-agnostic                 | 	Slower for high **_M_**, sensitive to **_S_**    |
+| **SamplingExplainer**| 	Very simple, scales linearly in **_M_** | Assumes feature independence       |
 
 ---
 
@@ -197,7 +204,7 @@ The SHAP bar plot ranks features by their average impact (mean absolute SHAP val
 
 ### **Bar plot (Local)**: 
 
-For a single prediction, it displays each feature's exact contribution (positive/negative SHAP value), explaining how they pushed the prediction higher or lower than the baseline.
+For a single prediction, it displays each feature's exact contribution (positive/negative SHAP value), explaining how they pushed the prediction higher or lower than the baseline. This can help HR specialists understand why a specific candidate was recommended or not.
 
 ![Bar Plot](readme_images/bar_plot_local.png)
 
@@ -214,7 +221,7 @@ The waterfall plot for a specific candidate shows how each feature contributed t
 ![Waterfall Plot](readme_images/waterfall_plot.png)
 
 
-### Build-in Feature importance by CatBoost
+### Built-in Feature importance by CatBoost
 
 Visual plots from both SHAP approaches and the built-in CatBoost feature importance revealed consistent insights, aligning well with our initial exploratory data analysis.
 
@@ -224,7 +231,7 @@ Visual plots from both SHAP approaches and the built-in CatBoost feature importa
 
 It shows average magnitude of feature impact across the dataset
 
-SHAP values provide detailed feature contributions for each prediction, showing both magnitude and direction
+SHAP values provide detailed feature contributions for each prediction, showing both magnitude and direction. So it can interpret not only global features importance, but also individual instance interpretation.
 
 ---
 
@@ -255,4 +262,18 @@ SHAP values provide detailed feature contributions for each prediction, showing 
 
 ---
 
+## 7. Conclusion
+
 By integrating CatBoost and SHAP, we not only achieve high model performance but also offer deep insights into the decision-making process. This dual focus on accuracy and interpretability supports fair and informed HR practices, making it a powerful approach for modern recruitment systems.
+
+## 8. References
+
+[Dataset that we used to train the hiring model](https://www.kaggle.com/datasets/rabieelkharoua/predicting-hiring-decisions-in-recruitment-data)
+
+[Original article about SHAP values](https://papers.nips.cc/paper_files/paper/2017/hash/8a20a8621978632d76c43dfd28b67767-Abstract.html)
+
+[Original shap implementation (library)](https://github.com/shap/shap)
+
+[Our implementation](https://github.com/Zaurall/XAI)
+
+[CatBoost documentation](https://catboost.ai/docs/en/)
