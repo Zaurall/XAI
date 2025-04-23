@@ -155,6 +155,13 @@ Complexity scales as **_O(B·M·P)_** where **_B_** is background samples (t
 | **KernelExplainer**  | Theoretically robust, model-agnostic                 | 	Slower for high **_M_**, sensitive to **_S_**    |
 | **SamplingExplainer**| 	Very simple, scales linearly in **_M_** | Assumes feature independence       |
 
+In both cases the “sampling strategy” is importance-weighted Monte Carlo:
+
+- Kernel SHAP: importance sampling over coalitions via the Shapley kernel.
+- SamplingExplainer: uniform sampling over background points and per-feature perturbations.
+
+This balance of variance reduction (through weighted sampling) and computational tractability is what makes the scratch implementations practical.
+
 ---
 
 ## 5. Our Recruitment Model: Case Study
