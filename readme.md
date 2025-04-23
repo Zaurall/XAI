@@ -14,6 +14,7 @@
 4. [Efficient Approximation of Shapley Values](#4-efficient-approximation-of-shapley-values)
     - [Kernel SHAP (KernelExplainer)](#kernel-shap-kernelexplainer)
     - [Sampling-Based Approximation (SamplingExplainer)](#sampling-based-approximation-samplingexplainer)
+    - [Sampling strategy](#sampling-strategy)
     - [Tradeoffs and Practical Considerations](#tradeoffs-and-practical-considerations)
 5. [Our Recruitment Model: Case Study](#5-our-recruitment-model-case-study)
 6. [Key Insights and Recommendations](#6-key-insights-and-recommendations)
@@ -148,19 +149,22 @@ SamplingExplainer uses *feature perturbation* and *averaging over background dat
 
 Complexity scales as **_O(B·M·P)_** where **_B_** is background samples (typically 100-1000) and others you can see in kernel SHAP section.
 
+### Sampling strategy
+
+A sampling strategy is simply a way to pick a manageable number of examples instead of checking every possible case. In our SHAP implementation, we used two such strategies:
+
+- Kernel SHAP: we randomly choose groups of features—giving priority to very small and very large groups—to see how including them changes the model’s output.
+
+- SamplingExplainer: we randomly draw past data points and swap in one feature at a time from the instance we’re explaining, measuring how each swap shifts the prediction.
+
+These methods let us approximate each feature’s contribution quickly and accurately without testing all possible feature combinations.
+
 ### Tradeoffs and Practical Considerations
 
 | **Method**           | **Strength**                         | **Limitation**                     |
 |----------------------|--------------------------------------|------------------------------------|
 | **KernelExplainer**  | Theoretically robust, model-agnostic                 | 	Slower for high **_M_**, sensitive to **_S_**    |
 | **SamplingExplainer**| 	Very simple, scales linearly in **_M_** | Assumes feature independence       |
-
-In both cases the “sampling strategy” is importance-weighted Monte Carlo:
-
-- Kernel SHAP: importance sampling over coalitions via the Shapley kernel.
-- SamplingExplainer: uniform sampling over background points and per-feature perturbations.
-
-This balance of variance reduction (through weighted sampling) and computational tractability is what makes the scratch implementations practical.
 
 ---
 
