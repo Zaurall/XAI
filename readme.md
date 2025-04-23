@@ -104,7 +104,7 @@ $$
   This prioritizes small (1-2 features) and large (M-1 to M-2 features) coalitions, which carry the highest information value.
 
 - **Background Data Integration:**  
-  For each coalition, creates masked instances by blending the target observation's features with `background_data` (typically 10-100 samples). Predictions on these hybrid instances approximate **_f(S \cup i)_** and **_f(S)_**.
+  For each coalition, creates masked instances by blending the target observation's features with `background_data` (typically 10-100 samples). Predictions on these hybrid instances approximate **_f(S ⋃ i)_** and **_f(S)_**.
   
 - **Regression:**  
   Uses weighted linear regression to solve for Shapley values that best explain the prediction differences:
@@ -113,7 +113,7 @@ $$
 \min_{\phi} \sum_{S} w(S) [f(S) - (\phi_0 + \sum_{i∈S}\phi_i)]²
 $$
 
-This reduces the complexity from **_O(2^M)_** to **_O(T \cdot M)_**, where **_T_** is the number of samples.
+This reduces the complexity from **_O(2^M)_** to **_O(T * M)_**, where **_T_** is the number of samples.
 
 ### Sampling-Based Approximation (SamplingExplainer)
 
